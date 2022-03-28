@@ -1,12 +1,11 @@
 package controller
 
 import (
-	"fmt"
 	"gorm-api/config"
 	"gorm-api/models"
 	"net/http"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 type UserReq struct {
@@ -40,31 +39,53 @@ func CreateUser(c echo.Context) (err error) {
 }
 
 func GetUserById(c echo.Context) (err error) {
+	var user []models.User
 	req := new(UserReq)
-	c.Bind(req)
-
 	if err = c.Bind(req); err != nil {
-		fmt.Println("---->", c.Bind(req))
-		fmt.Println("---->", req)
-		fmt.Print(err)
 		return c.JSON(http.StatusBadRequest, nil)
 	}
-	fmt.Print(err)
-
-	var user []models.User
 
 	db := config.DBManager()
-	db = db.First(&user, req.ID)
-
-	// fmt.Println("====> ", req.ID)
+	db = db.Find(&user, req.ID)
 
 	return c.JSON(http.StatusOK, user)
 }
 
-// func UpdateUserById(c echo.Context) error {
+func UpdateUserById(c echo.Context) (err error) {
+	req := new(UserReq)
+	if err = c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, nil)
+	}
+	user := models.User{}
 
-// }
+	newUser := models.User{
+		Name:  req.Name,
+		Email: req.Email,
+	}
 
-// func DeleteUserById(c echo.Context) error {
+	db := config.DBManager()
+	result := db.Model(&user).Where("id = ?", req.ID).Updates(newUser)
 
-// }
+	return c.JSON(http.StatusCreated, result)
+}
+
+func DeleteUserById(c echo.Context) (err error) {
+	req := new(UserReq)
+	if err = c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, nil)
+	}
+
+	var user []models.User
+	db := config.DBManager()
+	db = db.Delete(&user, req.ID)
+
+	result := map[string]string{
+		"response_code": "200",
+		"message":       "succsess",
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "success delete user",
+		"data":    result,
+	})
+}

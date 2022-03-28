@@ -3,7 +3,7 @@ package route
 import (
 	"gorm-api/controller"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 func New() *echo.Echo {
@@ -11,7 +11,8 @@ func New() *echo.Echo {
 	e.GET("/user/list", controller.GetUsers)
 	e.POST("/user", controller.CreateUser)
 	e.GET("/user/:id", controller.GetUserById)
-	// e.PUT("/users/:id", controller.UpdateUserById)
-	// e.DELETE("/users/:id", controller.DeleteUserById)
+	e.PUT("/user/:id", controller.UpdateUserById)
+	e.DELETE("/user/:id", controller.DeleteUserById)
 	return e
+
 }
