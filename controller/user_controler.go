@@ -1,90 +1,70 @@
 package controller
 
 import (
+	"fmt"
 	"gorm-api/config"
 	"gorm-api/models"
 	"net/http"
-	"strconv"
 
 	"github.com/labstack/echo"
 )
 
 type UserReq struct {
-	ID    int    `json:"id" form:"id"`
-	Name  string `json:"name" form:"name"`
-	Email string `json:"email" form:"email"`
+	ID    int    `json:"id" param:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 }
 
-var UserList = make(map[int]models.User, 0)
+func GetUsers(c echo.Context) error {
+	var user []models.User
 
-func CreateUser(c echo.Context) error {
+	db := config.DBManager()
+	db = db.Find(&user)
+	return c.JSON(http.StatusOK, user)
+
+}
+
+func CreateUser(c echo.Context) (err error) {
 	req := new(UserReq)
-	c.Bind(req)
+	if err = c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, nil)
+	}
 	user := models.User{
 		Name:  req.Name,
 		Email: req.Email,
 	}
-	err := config.DB.Save(&user).Error
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"message": err.Error(),
-		})
-	}
+	db := config.DBManager()
+	db = db.Create(&user)
 
-	return c.JSON(http.StatusCreated, map[string]interface{}{
-		"message": "success create user",
-		"data":    user,
-	})
+	return c.JSON(http.StatusOK, user)
 }
 
-func GetUsers(c echo.Context) error {
-	var users []models.User
+func GetUserById(c echo.Context) (err error) {
+	req := new(UserReq)
+	c.Bind(req)
 
-	err := config.DB.Find(&users).Error
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"message": err.Error(),
-		})
+	if err = c.Bind(req); err != nil {
+		fmt.Println("---->", c.Bind(req))
+		fmt.Println("---->", req)
+		fmt.Print(err)
+		return c.JSON(http.StatusBadRequest, nil)
 	}
-	return c.JSON(http.StatusCreated, map[string]interface{}{
-		"message": "success get all users",
-		"data":    users,
-	})
-}
+	fmt.Print(err)
 
-func GetUserById(c echo.Context) error {
 	var user []models.User
-	id, _ := strconv.Atoi(c.Param("id"))
 
-	if err := config.DB.Find(&user, id).Error; err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"message": err.Error(),
-		})
-	}
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"message": "success get user",
-		"data":    user,
-	})
+	db := config.DBManager()
+	db = db.First(&user, req.ID)
+
+	// fmt.Println("====> ", req.ID)
+
+	return c.JSON(http.StatusOK, user)
 }
 
 // func UpdateUserById(c echo.Context) error {
 
 // }
 
-func DeleteUserById(c echo.Context) error {
-	req := new(UserReq)
-	c.Bind(req)
-	var user []models.User
-	id, _ := strconv.Atoi(c.Param("id"))
+// func DeleteUserById(c echo.Context) error {
 
-	err := config.DB.Delete(&user, id).Error
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"message": err,
-		})
-	}
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"message": "succsess delete user",
-	})
-
-}
+// }
