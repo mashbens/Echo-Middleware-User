@@ -59,14 +59,14 @@ func UpdateUserById(c echo.Context) (err error) {
 	user := models.User{}
 
 	newUser := models.User{
+		ID:    req.ID,
 		Name:  req.Name,
 		Email: req.Email,
 	}
 
 	db := config.DBManager()
-	result := db.Model(&user).Where("id = ?", req.ID).Updates(newUser)
-
-	return c.JSON(http.StatusCreated, result)
+	db = db.Model(&user).Where("id = ?", req.ID).Updates(newUser)
+	return c.JSON(http.StatusCreated, user)
 }
 
 func DeleteUserById(c echo.Context) (err error) {
@@ -84,8 +84,5 @@ func DeleteUserById(c echo.Context) (err error) {
 		"message":       "succsess",
 	}
 
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"message": "success delete user",
-		"data":    result,
-	})
+	return c.JSON(http.StatusOK, result)
 }
