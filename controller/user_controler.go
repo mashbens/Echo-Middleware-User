@@ -2,6 +2,7 @@ package controller
 
 import (
 	"gorm-api/config"
+	m "gorm-api/middleware"
 	"gorm-api/models"
 	"net/http"
 
@@ -9,9 +10,11 @@ import (
 )
 
 type UserReq struct {
-	ID    int    `json:"id" param:"id"`
-	Name  string `json:"name"`
-	Email string `json:"email"`
+	ID       int    `json:"id" param:"id"`
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
+	Token    string `json:"token"`
 }
 
 func GetUsers(c echo.Context) error {
@@ -85,4 +88,27 @@ func DeleteUserById(c echo.Context) (err error) {
 	}
 
 	return c.JSON(http.StatusOK, result)
+}
+
+func LoginUser(c echo.Context) (err error) {
+
+	req := new(UserReq)
+	if err = c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, nil)
+	}
+	user := models.User{}
+	db := config.DBManager()
+
+	db = db.Where("email = ? AND password = ?", req.Email, req.Password).First(&user)
+
+	token, err := m.CreateToken(req.ID, req.Name)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, nil)
+
+	}
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Login Sucsess",
+		"user":    user,
+		"token":   token,
+	})
 }
